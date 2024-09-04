@@ -885,7 +885,23 @@ impl Builder {
             .get()
             .expect("Project root is not initialized")
             .clone();
-        let docker = Docker::connect_with_unix_defaults()?;
+        let docker;
+        if std::env::var("DOCKER_HOST").is_ok() {
+            #[cfg(feature = "ssl")]
+            if std::env::var("DOCKER_CERT_PATH").is_ok() {
+                docker = Docker::connect_with_ssl_defaults()?;
+            } else {
+                docker = Docker::connect_with_http_defaults()?;
+            }
+            #[cfg(not(feature = "ssl"))]
+            if std::env::var("DOCKER_CERT_PATH").is_ok() {
+                panic!("DOCKER_CERT_PATH without ssl available");
+            } else {
+                docker = Docker::connect_with_http_defaults()?;
+            }
+        } else {
+            docker = Docker::connect_with_unix_defaults()?;
+        }
 
         let ipam_config = IpamConfig {
             subnet: Some(format!(
