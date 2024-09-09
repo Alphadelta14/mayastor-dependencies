@@ -10,15 +10,18 @@ die() {
 
 # Returns the git orgname from a given git url (both https and git)
 # Example: git@github.com:openebs/mayastor.git => openebs
+# Example: git@gitlab.example.com:openebs/platform/mayastor.git => openebs/platform
+# Example: https://gitlab.example.com/openebs/platform/mayastor.git => openebs/platform
 urlOrgName() {
   local gitUrl="$1"
   if echo "$gitUrl" | grep -qa "^git@"; then
-    echo "$gitUrl" | awk -F/ '/git/ { print $1 }' | cut -d':' -f2
+    gitUrl="${gitUrl#*:}"
   elif echo "$gitUrl" | grep -qa "^https://"; then
-    echo "$gitUrl" | awk -F/ '/https/ { print $4 }'
+    gitUrl=$(echo "$gitUrl" | cut -d/ -f4-)
   else
     die "Unknown git url type: '$gitUrl'"
   fi
+  echo "${gitUrl%/*}"
 }
 
 orgName() {
